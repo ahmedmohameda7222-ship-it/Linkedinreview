@@ -168,6 +168,12 @@ supabase/sql/001_schema.sql
 supabase/sql/002_rls_policies.sql
 ```
 
+If a public tracking URL shows `Link error`, run the hotfix file as well:
+
+```text
+supabase/sql/006_fix_public_tracking_rpc.sql
+```
+
 4. Optional seed file:
 
 ```text
@@ -179,6 +185,7 @@ supabase/sql/003_seed_optional.sql
 ```text
 supabase/sql/005_upgrade_to_job_tracker_platform.sql
 supabase/sql/002_rls_policies.sql
+supabase/sql/006_fix_public_tracking_rpc.sql
 ```
 
 ## SQL structure

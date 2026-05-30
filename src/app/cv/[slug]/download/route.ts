@@ -31,7 +31,10 @@ export async function GET(_: Request, { params }: { params: { slug: string } }) 
     p_is_bot: isLikelyBotUserAgent(userAgent),
   });
 
-  if (error) return htmlError("CV download error", "The CV download could not be processed right now.", 500);
+  if (error) {
+    console.error("track_cv_event_and_get_payload download failed", { slug, message: error.message, details: error.details, hint: error.hint, code: error.code });
+    return htmlError("CV download error", "The CV download could not be processed right now.", 500);
+  }
   const result = Array.isArray(data) ? data[0] : data;
   if (!result || result.status === "not_found") return htmlError("CV link not found", "This CV link does not exist.", 404);
   if (result.status === "inactive") return htmlError("CV link inactive", "This CV link has been deactivated by its owner.", 410);

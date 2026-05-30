@@ -47,7 +47,10 @@ export default async function ProfileRedirectPage({ params }: { params: { slug: 
     p_is_bot: isBot,
   });
 
-  if (error) return <TrackingError title="Link error" description="The tracking link could not be processed right now." />;
+  if (error) {
+    console.error("track_profile_click_and_get_target failed", { slug, message: error.message, details: error.details, hint: error.hint, code: error.code });
+    return <TrackingError title="Link error" description="The tracking link could not be processed right now." />;
+  }
   const result = Array.isArray(data) ? data[0] : data;
 
   if (!result || result.status === "not_found") return <TrackingError title="Link not found" description="This tracking link does not exist." />;

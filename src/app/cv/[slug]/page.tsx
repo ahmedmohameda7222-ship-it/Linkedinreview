@@ -38,7 +38,10 @@ export default async function CvLandingPage({ params }: { params: { slug: string
     p_is_bot: isLikelyBotUserAgent(userAgent),
   });
 
-  if (error) return <PublicError title="CV link error" description="The CV page could not be loaded right now." />;
+  if (error) {
+    console.error("track_cv_event_and_get_payload view failed", { slug, message: error.message, details: error.details, hint: error.hint, code: error.code });
+    return <PublicError title="CV link error" description="The CV page could not be loaded right now." />;
+  }
   const result = Array.isArray(data) ? data[0] : data;
   if (!result || result.status === "not_found") return <PublicError title="CV link not found" description="This CV link does not exist." />;
   if (result.status === "inactive") return <PublicError title="CV link inactive" description="This CV link has been deactivated by its owner." />;

@@ -1,66 +1,6 @@
-alter table public.profiles enable row level security;
-alter table public.companies enable row level security;
-alter table public.tracking_links enable row level security;
-alter table public.clicks enable row level security;
-alter table public.cv_events enable row level security;
-alter table public.timeline_events enable row level security;
-alter table public.reminders enable row level security;
-
--- Profiles: each authenticated user can manage only their own profile.
-drop policy if exists profiles_select_own on public.profiles;
-create policy profiles_select_own on public.profiles for select to authenticated using (auth.uid() = user_id);
-drop policy if exists profiles_insert_own on public.profiles;
-create policy profiles_insert_own on public.profiles for insert to authenticated with check (auth.uid() = user_id);
-drop policy if exists profiles_update_own on public.profiles;
-create policy profiles_update_own on public.profiles for update to authenticated using (auth.uid() = user_id) with check (auth.uid() = user_id);
-drop policy if exists profiles_delete_own on public.profiles;
-create policy profiles_delete_own on public.profiles for delete to authenticated using (auth.uid() = user_id);
-
--- Companies/applications.
-drop policy if exists companies_select_own on public.companies;
-create policy companies_select_own on public.companies for select to authenticated using (auth.uid() = user_id);
-drop policy if exists companies_insert_own on public.companies;
-create policy companies_insert_own on public.companies for insert to authenticated with check (auth.uid() = user_id);
-drop policy if exists companies_update_own on public.companies;
-create policy companies_update_own on public.companies for update to authenticated using (auth.uid() = user_id) with check (auth.uid() = user_id);
-drop policy if exists companies_delete_own on public.companies;
-create policy companies_delete_own on public.companies for delete to authenticated using (auth.uid() = user_id);
-
--- Tracking links.
-drop policy if exists tracking_links_select_own on public.tracking_links;
-create policy tracking_links_select_own on public.tracking_links for select to authenticated using (auth.uid() = user_id);
-drop policy if exists tracking_links_insert_own on public.tracking_links;
-create policy tracking_links_insert_own on public.tracking_links for insert to authenticated with check (auth.uid() = user_id);
-drop policy if exists tracking_links_update_own on public.tracking_links;
-create policy tracking_links_update_own on public.tracking_links for update to authenticated using (auth.uid() = user_id) with check (auth.uid() = user_id);
-drop policy if exists tracking_links_delete_own on public.tracking_links;
-create policy tracking_links_delete_own on public.tracking_links for delete to authenticated using (auth.uid() = user_id);
-
--- Clicks and CV events are read-only to dashboard users. Public inserts happen through SECURITY DEFINER RPCs.
-drop policy if exists clicks_select_own on public.clicks;
-create policy clicks_select_own on public.clicks for select to authenticated using (auth.uid() = user_id);
-drop policy if exists cv_events_select_own on public.cv_events;
-create policy cv_events_select_own on public.cv_events for select to authenticated using (auth.uid() = user_id);
-
--- Timeline.
-drop policy if exists timeline_events_select_own on public.timeline_events;
-create policy timeline_events_select_own on public.timeline_events for select to authenticated using (auth.uid() = user_id);
-drop policy if exists timeline_events_insert_own on public.timeline_events;
-create policy timeline_events_insert_own on public.timeline_events for insert to authenticated with check (auth.uid() = user_id);
-drop policy if exists timeline_events_update_own on public.timeline_events;
-create policy timeline_events_update_own on public.timeline_events for update to authenticated using (auth.uid() = user_id) with check (auth.uid() = user_id);
-drop policy if exists timeline_events_delete_own on public.timeline_events;
-create policy timeline_events_delete_own on public.timeline_events for delete to authenticated using (auth.uid() = user_id);
-
--- Reminders.
-drop policy if exists reminders_select_own on public.reminders;
-create policy reminders_select_own on public.reminders for select to authenticated using (auth.uid() = user_id);
-drop policy if exists reminders_insert_own on public.reminders;
-create policy reminders_insert_own on public.reminders for insert to authenticated with check (auth.uid() = user_id);
-drop policy if exists reminders_update_own on public.reminders;
-create policy reminders_update_own on public.reminders for update to authenticated using (auth.uid() = user_id) with check (auth.uid() = user_id);
-drop policy if exists reminders_delete_own on public.reminders;
-create policy reminders_delete_own on public.reminders for delete to authenticated using (auth.uid() = user_id);
+-- Hotfix for public tracking links returning "Link error".
+-- Run this after 005_upgrade_to_job_tracker_platform.sql and 002_rls_policies.sql.
+-- Cause fixed: unqualified user_id references inside SECURITY DEFINER RPC functions.
 
 create or replace function public.track_profile_click_and_get_target(
   p_slug text,
