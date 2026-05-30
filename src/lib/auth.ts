@@ -6,12 +6,7 @@ import { validateLinkedInUrl } from "@/lib/validation";
 type AppSupabaseClient = ReturnType<typeof createClient>;
 
 export async function ensureProfile(supabase: AppSupabaseClient, user: User) {
-  const { data: existing, error: selectError } = await supabase
-    .from("profiles")
-    .select("*")
-    .eq("user_id", user.id)
-    .maybeSingle();
-
+  const { data: existing, error: selectError } = await supabase.from("profiles").select("*").eq("user_id", user.id).maybeSingle();
   if (selectError) throw selectError;
   if (existing) return existing as Profile;
 
@@ -24,7 +19,10 @@ export async function ensureProfile(supabase: AppSupabaseClient, user: User) {
     .insert({
       user_id: user.id,
       full_name: fullName,
+      notification_email: user.email ?? null,
       linkedin_url: linkedinCheck.valid && linkedinCheck.value ? linkedinCheck.value : null,
+      cv_file_url: null,
+      email_notifications_enabled: true,
     })
     .select("*")
     .single();

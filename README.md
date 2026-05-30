@@ -1,68 +1,124 @@
 # LinkedIn Recruiter Link Tracker
 
-A production-ready Next.js + Supabase web app for creating LinkedIn profile tracking links per company or recruiter.
+A production-ready **Job Application Tracker + LinkedIn/CV Analytics** web app built with Next.js, TypeScript, Tailwind CSS, Supabase Auth, Supabase Postgres, and Row Level Security.
 
-The app creates URLs such as:
+The app helps users create clean public tracking links for job applications, record LinkedIn/CV engagement events, separate likely-human clicks from bot/security-scanner opens, and manage follow-up reminders.
 
-```text
-https://your-domain.com/r/bmw-a1b2c3
-```
+## What the app does
 
-When someone opens a tracking link, the app:
+- Lets each user create an account and save their own LinkedIn profile URL.
+- Creates application/company records with job title, recruiter details, application URL, notes, status, and applied date.
+- Creates multiple source-specific tracking links per company.
+- Uses clean random public slugs such as `/profile/a8f3k2` instead of company-specific slugs.
+- Redirects public LinkedIn tracking links to the user's configured LinkedIn URL.
+- Tracks CV landing page views through `/cv/[slug]`.
+- Tracks CV downloads through `/cv/[slug]/download`.
+- Tracks total clicks, likely-human clicks, possible bots, duplicates, CV views, CV downloads, browser/device/OS/country stats, and source/campaign performance.
+- Provides a status pipeline: `Applied`, `Link Opened`, `Interview`, `Rejected`, `Offer`, `Archived`.
+- Automatically moves a company from `Applied` to `Link Opened` after the first likely-human click.
+- Provides reminders and dashboard follow-up lists.
+- Provides CSV exports for clicks, companies, and full reports.
+- Keeps all private dashboard data behind Supabase Auth and RLS.
 
-1. Finds the active tracking slug.
-2. Records a click in Supabase PostgreSQL.
-3. Redirects immediately to the signed-in owner user's LinkedIn profile URL.
+## What the app cannot do
 
-## Important LinkedIn profile behavior
+- It does **not** access LinkedIn analytics.
+- It does **not** hack, scrape, or read LinkedIn recruiter data.
+- It cannot prove exactly who opened a link.
+- It cannot guarantee that a click came from a real recruiter because company email systems often scan links automatically.
+- It does not use Google Analytics or external tracking scripts.
+- It does not store raw IP addresses.
+- It does not add invasive fingerprinting.
 
-There is no personal LinkedIn profile hardcoded as the default target.
+## Click tracking model
 
-Every user must enter their own LinkedIn profile URL during signup or in **Settings** before creating tracking links. The helper prefix is:
-
-```text
-https://www.linkedin.com/in/
-```
-
-The user must complete the rest of the URL with their own LinkedIn profile name. The app validates that the field is not empty and starts with this exact prefix.
-
-## Branding assets
-
-The project includes the uploaded brand assets in `public/`:
-
-```text
-public/favicon.ico
-public/favicon.png
-public/logo.png
-```
-
-- `favicon.ico` / `favicon.png` are used for the browser tab logo through Next.js metadata.
-- `logo.png` is used in the app UI header and auth screens.
-
-## What this app does
-
-- Lets users sign up, log in, log out, and request password resets with Supabase Auth.
-- Requires each user to store their own LinkedIn profile URL.
-- Lets each user create company-specific tracking links.
-- Requires a company name before creating or saving a tracking link.
-- Tracks clicks per company.
-- Stores referrer, user agent, hashed IP, optional country header, and basic device/browser info.
-- Shows a private SaaS-style dashboard with total clicks, clicks today, clicks this week, companies, click history, and a simple click chart.
-- Uses Supabase Row Level Security so users can only see their own dashboard data.
-
-## What this app cannot do
-
-This app **cannot** tell whether someone viewed a LinkedIn profile directly inside LinkedIn.
-
-It only tracks clicks on generated tracking links, for example:
+When a recruiter opens a clean public link like:
 
 ```text
-/r/bmw-a1b2c3
+https://your-domain.com/profile/a8f3k2
 ```
 
-If a recruiter copies the real LinkedIn URL, searches manually, or views the profile from inside LinkedIn, this app will not see that action.
+The app:
 
-This app does **not** hack LinkedIn, scrape LinkedIn, access LinkedIn analytics, or bypass LinkedIn privacy settings.
+1. Resolves the random slug using a safe Supabase RPC function.
+2. Records a click event.
+3. Stores only a hashed IP value, not the raw IP address.
+4. Stores basic user-agent-derived fields: browser, device type, and OS.
+5. Classifies the event as `human`, `bot`, `duplicate`, or `unknown`.
+6. Redirects the visitor to the user's configured LinkedIn profile URL.
+
+The public route never exposes the company name, recruiter notes, dashboard data, or user analytics.
+
+## Bot/security scanner detection
+
+Company email systems often open links automatically before a recruiter sees the email. The app classifies clicks using conservative rules:
+
+- Known bot/scanner user agents are marked as possible bots.
+- Empty or suspicious user agents are treated as bot-like.
+- Repeated clicks from the same `ipHash + userAgent + trackingLinkId` within 30 seconds are marked as duplicates.
+- Bot and duplicate clicks are stored for transparency but can be filtered out of analytics.
+- Redirects are never blocked because blocking can break legitimate recruiter access.
+
+## Source/campaign tracking
+
+Each tracking link has a source:
+
+- CV
+- Cover Letter
+- Email
+- Email Signature
+- LinkedIn Message
+- Portfolio
+- Other
+
+A company can have multiple source-specific links, for example:
+
+```text
+BMW - CV            - /profile/a8f3k2
+BMW - Cover Letter  - /profile/k9p2m1
+BMW - Email         - /profile/x7n4q8
+```
+
+The dashboard groups analytics by company, source, and tracking link.
+
+## CV view/download tracking
+
+Each tracking slug can also be used as a CV landing page:
+
+```text
+/cv/[slug]
+```
+
+When opened, the app records a CV view and shows a simple professional landing page with:
+
+- View LinkedIn
+- Download CV
+
+The download button uses:
+
+```text
+/cv/[slug]/download
+```
+
+This records a CV download event and redirects to the user's `cv_file_url`. For now, CV uploads are intentionally simple: users paste a public PDF URL in Settings.
+
+## Privacy note
+
+- Raw IP addresses are never stored.
+- IP addresses are hashed server-side using `IP_HASH_SALT`.
+- Country is optional and only stored if provided by deployment platform headers such as `x-vercel-ip-country`, `cf-ipcountry`, or `x-country`.
+- No precise location is collected.
+- No Google Analytics or third-party web analytics script is included.
+- No invasive fingerprinting is used.
+
+## Security note
+
+- Supabase RLS must be enabled.
+- Dashboard users can only read/write their own data.
+- Public routes record events only through safe `SECURITY DEFINER` RPC functions.
+- Public routes do not expose dashboard tables directly.
+- Do not expose service role keys to the browser.
+- `SUPABASE_SERVICE_ROLE_KEY` is optional and used only server-side for notification helper logic.
 
 ## Tech stack
 
@@ -70,293 +126,179 @@ This app does **not** hack LinkedIn, scrape LinkedIn, access LinkedIn analytics,
 - TypeScript
 - Tailwind CSS
 - Supabase Auth
-- Supabase PostgreSQL
+- Supabase Postgres
 - Supabase Row Level Security
-- Supabase JavaScript SDK
+- Netlify deployment support
 
-## Important security note about keys
-
-This project follows the requested restriction: it does **not** use environment variables. The Supabase project URL and anon key are hardcoded in:
-
-```text
-src/lib/supabase/config.ts
-```
-
-The Supabase anon key is public by design when Row Level Security is configured correctly.
-
-Never hardcode or expose a Supabase `service_role` key in frontend code, backend code committed to a repository, or any browser-accessible file.
-
-## Privacy note
-
-The app does not store raw IP addresses.
-
-When a tracking link is opened, the server reads the IP address from request headers only to create a SHA-256 hash with a hardcoded salt. Only the hash is inserted into the database.
-
-The app does not use invasive fingerprinting. It stores only standard request metadata:
-
-- referrer, if provided by the browser
-- user agent
-- hashed IP
-- optional country header, if available from the hosting provider
-- simple device/browser classification
-
-For a stricter production deployment, add a public privacy notice on your domain and review GDPR requirements for your jurisdiction.
-
-## Supabase setup
-
-### 1. Create or open your Supabase project
-
-Project URL used by this app:
-
-```text
-https://pokfickvtmvutiqygxpi.supabase.co
-```
-
-REST API URL provided:
-
-```text
-https://pokfickvtmvutiqygxpi.supabase.co/rest/v1/
-```
-
-Anon key is hardcoded in the app as requested.
-
-### 2. Run SQL schema
-
-Open Supabase Dashboard → SQL Editor.
-
-Run these files in order:
-
-```text
-supabase/sql/001_schema.sql
-supabase/sql/002_rls_policies.sql
-```
-
-Optional:
-
-```text
-supabase/sql/003_seed_optional.sql
-supabase/sql/004_update_linkedin_profile_rules.sql
-```
-
-If your Supabase database already used an older version of this project, run `004_update_linkedin_profile_rules.sql` once to update the profile trigger and URL checks.
-
-The schema creates:
-
-- `profiles`
-- `companies`
-- `clicks`
-- trigger for profile creation after signup
-- RPC function `track_click_and_get_target` for safe public click recording
-
-The RLS file enables Row Level Security and policies.
-
-### 3. Configure Supabase Auth URLs
-
-In Supabase Dashboard → Authentication → URL Configuration:
-
-Set **Site URL** to your final deployed site URL, for example:
-
-```text
-https://your-domain.com
-```
-
-Add these redirect URLs:
-
-```text
-https://your-domain.com/auth/callback
-https://your-domain.com/update-password
-http://localhost:3000/auth/callback
-http://localhost:3000/update-password
-```
-
-For production, replace `your-domain.com` with your real domain.
-
-## Deployment
-
-This is a standard Next.js project. It is not tied to any specific hosting provider.
-
-Use any deployment platform that supports Next.js 14 and Node.js.
-
-Typical platform settings:
-
-```text
-Install command: npm install
-Build command: npm run build
-Start command: npm run start
-Output: Next.js default output
-```
-
-No `.env` file is required because this project intentionally hardcodes the Supabase URL and anon key in `src/lib/supabase/config.ts`.
-
-## Optional local development
-
-Local development is optional. Use this only if you want to test on your own laptop:
+## Local development
 
 ```bash
 npm install
 npm run dev
 ```
 
-Open:
+Then open:
 
 ```text
 http://localhost:3000
 ```
 
-## How to use the app
+## Build check
 
-Example workflow:
+```bash
+npm run typecheck
+npm run build
+```
 
-1. User creates an account.
-2. User enters their own LinkedIn URL during signup or in **Settings**.
-3. User opens **Companies**.
-4. User adds company `BMW`.
-5. App generates a unique link like:
+This project was verified with:
 
-   ```text
-   https://your-domain.com/r/bmw-k8x2qf
-   ```
+```bash
+npm run typecheck
+npm run build
+```
 
-6. User puts that link in their CV or application.
-7. Recruiter opens it.
-8. App records the click.
-9. Recruiter is redirected to the user's LinkedIn profile.
-10. User sees the click in the dashboard.
+## Supabase setup
 
-## Data model
-
-### profiles
-
-- `id`
-- `user_id`
-- `full_name`
-- `linkedin_url`
-- `created_at`
-- `updated_at`
-
-### companies
-
-- `id`
-- `user_id`
-- `name`
-- `slug`
-- `target_url`
-- `active`
-- `created_at`
-- `updated_at`
-
-### clicks
-
-- `id`
-- `user_id`
-- `company_id`
-- `clicked_at`
-- `referrer`
-- `user_agent`
-- `ip_hash`
-- `country`
-- `device`
-- `created_at`
-
-## SQL files
+1. Create a Supabase project.
+2. Open the SQL editor.
+3. Run:
 
 ```text
 supabase/sql/001_schema.sql
 supabase/sql/002_rls_policies.sql
+```
+
+4. Optional seed file:
+
+```text
 supabase/sql/003_seed_optional.sql
-supabase/sql/004_update_linkedin_profile_rules.sql
 ```
 
-Run `001_schema.sql` first, then `002_rls_policies.sql`.
-
-## Important RLS behavior
-
-- Logged-in users can only read, create, update, and delete their own profile.
-- Logged-in users can only read, create, update, and delete their own companies.
-- Logged-in users can only read their own clicks.
-- The public tracking route uses a safe RPC function to insert click records and return only the redirect target URL.
-- Other users' dashboard data is not exposed.
-
-## Project structure
+5. If you already deployed the older version of this app, run this migration first, then re-run the RLS/RPC file:
 
 ```text
-src/
-  app/
-    login/
-    signup/
-    dashboard/
-    r/[slug]/
-    privacy/
-  components/
-  lib/
-public/
-  favicon.ico
-  favicon.png
-  logo.png
-supabase/
-  sql/
+supabase/sql/005_upgrade_to_job_tracker_platform.sql
+supabase/sql/002_rls_policies.sql
 ```
 
-## Troubleshooting
+## SQL structure
 
-### `next: not found`
+Main tables:
 
-This means dependencies were not installed before the build command ran. The deployment platform must run:
+- `profiles`
+- `companies`
+- `tracking_links`
+- `clicks`
+- `cv_events`
+- `timeline_events`
+- `reminders`
+
+Public-safe RPC functions:
+
+- `track_profile_click_and_get_target(...)`
+- `track_cv_event_and_get_payload(...)`
+- `mark_first_click_notification_sent(...)`
+
+## Environment / configuration
+
+The current project keeps the public Supabase URL and anon key in:
 
 ```text
-npm install
+src/lib/supabase/config.ts
 ```
 
-before:
+For a public production repository, move these to environment variables and rotate the existing values.
 
-```text
-npm run build
-```
-
-### Auth redirect does not work
-
-Check Supabase Auth URL configuration. Your deployed domain must be added as a Site URL and redirect URL.
-
-### Tracking link says not found
-
-Check that:
-
-- the company exists
-- the slug is correct
-- the link is active
-- SQL files were executed successfully
-
-### Tracking link says missing LinkedIn URL
-
-Open **Settings**, enter your own LinkedIn profile URL, and save it. The URL must start with:
-
-```text
-https://www.linkedin.com/in/
-```
-
-### Dashboard is empty after signup
-
-Check that the `handle_new_user()` trigger exists from `001_schema.sql`.
-
-## Cloud deployment note
-
-This project intentionally contains no hosting-provider-specific configuration files. There are no provider-specific build configuration files.
-
-Use a standard Node/Next.js deployment platform. The platform should run:
+Server-only optional variables for first-click notifications:
 
 ```bash
-npm install
-npm run build
-npm run start
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+EMAIL_PROVIDER=resend
+RESEND_API_KEY=your-resend-api-key
+FIRST_CLICK_NOTIFICATION_FROM="Job Tracker <notifications@your-domain.com>"
 ```
 
-The project pins a stable Node/npm line in `package.json`:
+The app works normally if these variables are missing. The notification helper returns a skipped result and never crashes the redirect flow.
 
-```json
-"engines": {
-  "node": "20.x",
-  "npm": "10.8.x"
-}
+## Email notification abstraction
+
+The notification entry point is:
+
+```text
+src/lib/server/notifications.ts
 ```
 
-If your platform previously used another Node or npm version, clear the deployment cache and redeploy with the files from this ZIP only.
+The function is:
+
+```ts
+sendFirstClickNotification(...)
+```
+
+It currently supports a Resend provider path when environment variables are configured. You can add SendGrid, Supabase Edge Functions, or another provider inside the same function without changing the tracking routes.
+
+Notification behavior:
+
+- Only the first likely-human click is considered.
+- Bot clicks do not trigger notifications.
+- Duplicate clicks do not trigger notifications.
+- Repeated human clicks do not repeatedly trigger notifications.
+- If the provider is not configured, the app skips sending safely.
+
+## Netlify deployment
+
+A `netlify.toml` file is included to fix initialization/build configuration:
+
+```toml
+[build]
+  command = "npm run build"
+  publish = ".next"
+
+[build.environment]
+  NODE_VERSION = "20"
+  NPM_VERSION = "10"
+  NEXT_TELEMETRY_DISABLED = "1"
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
+```
+
+Recommended Netlify steps:
+
+1. Connect the GitHub repository to Netlify.
+2. Set build command to `npm run build`.
+3. Set publish directory to `.next`.
+4. Make sure Node 20 is used.
+5. Keep the Netlify Next.js plugin enabled.
+6. Add server-only environment variables only if you configure email notifications.
+
+## How to use
+
+1. Create an account.
+2. Add your LinkedIn URL in Settings.
+3. Optionally add a public CV PDF URL in Settings.
+4. Add a company/application.
+5. Create source-specific tracking links.
+6. Put the clean `/profile/[slug]` link in your CV, email, cover letter, or application.
+7. Optionally use `/cv/[slug]` as a CV landing page.
+8. Recruiter opens the link.
+9. Dashboard records the click, classifies it, and updates analytics.
+10. Follow up based on status, reminder date, and likely-human engagement.
+
+## Public route examples
+
+```text
+/profile/a8f3k2          -> records LinkedIn click and redirects to LinkedIn
+/r/a8f3k2                -> legacy route, same behavior
+/cv/a8f3k2               -> records CV view and shows CV landing page
+/cv/a8f3k2/download      -> records CV download and redirects to CV file URL
+```
+
+## Quality notes
+
+- TypeScript strict mode is enabled.
+- Input validation is included.
+- LinkedIn URL validation is required.
+- Slugs are short random values and globally unique through a database unique constraint.
+- Public routes do not expose dashboard data.
+- RLS policies restrict each user to their own data.
+- No raw IP addresses are stored.

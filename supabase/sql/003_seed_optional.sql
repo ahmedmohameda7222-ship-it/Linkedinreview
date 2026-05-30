@@ -1,9 +1,8 @@
--- Optional seed file.
+-- Optional notes.
 -- Supabase Auth users must be created through Supabase Auth, not by inserting manually into auth.users.
--- After signing up in the app, open /dashboard/companies and create your first tracking link from the UI.
-
--- Example after you are authenticated in the app:
+-- After signing up in the app:
 -- 1. Go to /dashboard/settings and confirm your LinkedIn URL.
--- 2. Go to /dashboard/companies.
--- 3. Add company "BMW".
--- 4. Copy the generated /r/bmw-xxxxxx link.
+-- 2. Optionally paste a public CV PDF URL.
+-- 3. Go to /dashboard/companies.
+-- 4. Create a company/application and choose a source such as CV or Email.
+-- 5. Copy the generated /profile/[random-slug] link or /cv/[random-slug] CV page link.
