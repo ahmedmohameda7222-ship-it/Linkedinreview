@@ -255,7 +255,6 @@ A `netlify.toml` file is included to fix initialization/build configuration:
 
 [build.environment]
   NODE_VERSION = "20"
-  NPM_VERSION = "10"
   NEXT_TELEMETRY_DISABLED = "1"
 
 [[plugins]]
