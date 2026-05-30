@@ -128,7 +128,6 @@ This records a CV download event and redirects to the user's `cv_file_url`. For 
 - Supabase Auth
 - Supabase Postgres
 - Supabase Row Level Security
-- Netlify deployment support
 
 ## Local development
 
@@ -251,31 +250,16 @@ Notification behavior:
 - Repeated human clicks do not repeatedly trigger notifications.
 - If the provider is not configured, the app skips sending safely.
 
-## Netlify deployment
+## Deployment
 
-A `netlify.toml` file is included to fix initialization/build configuration:
+The app is a standard Next.js project. Deploy it using your hosting provider's Next.js preset or framework auto-detection. Do not commit platform-specific initialization files unless you intentionally want to override the host defaults.
 
-```toml
-[build]
-  command = "npm run build"
-  publish = ".next"
+General steps:
 
-[build.environment]
-  NODE_VERSION = "20"
-  NEXT_TELEMETRY_DISABLED = "1"
-
-[[plugins]]
-  package = "@netlify/plugin-nextjs"
-```
-
-Recommended Netlify steps:
-
-1. Connect the GitHub repository to Netlify.
-2. Set build command to `npm run build`.
-3. Set publish directory to `.next`.
-4. Make sure Node 20 is used.
-5. Keep the Netlify Next.js plugin enabled.
-6. Add server-only environment variables only if you configure email notifications.
+1. Connect the GitHub repository to your hosting provider.
+2. Add the required environment variables.
+3. Use `npm run build` as the build command if asked.
+4. Let the provider auto-detect the Next.js output settings.
 
 ## How to use
 
