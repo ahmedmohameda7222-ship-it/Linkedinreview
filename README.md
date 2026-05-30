@@ -12,22 +12,42 @@ When someone opens a tracking link, the app:
 
 1. Finds the active tracking slug.
 2. Records a click in Supabase PostgreSQL.
-3. Redirects immediately to the owner user's LinkedIn profile URL.
+3. Redirects immediately to the signed-in owner user's LinkedIn profile URL.
 
-The initial/default LinkedIn URL configured in the app is:
+## Important LinkedIn profile behavior
+
+There is no personal LinkedIn profile hardcoded as the default target.
+
+Every user must enter their own LinkedIn profile URL during signup or in **Settings** before creating tracking links. The helper prefix is:
 
 ```text
-https://www.linkedin.com/in/ahmed-mohamed-a63a1a230/
+https://www.linkedin.com/in/
 ```
+
+The user must complete the rest of the URL with their own LinkedIn profile name. The app validates that the field is not empty and starts with this exact prefix.
+
+## Branding assets
+
+The project includes the uploaded brand assets in `public/`:
+
+```text
+public/favicon.ico
+public/favicon.png
+public/logo.png
+```
+
+- `favicon.ico` / `favicon.png` are used for the browser tab logo through Next.js metadata.
+- `logo.png` is used in the app UI header and auth screens.
 
 ## What this app does
 
 - Lets users sign up, log in, log out, and request password resets with Supabase Auth.
-- Lets each user store their own LinkedIn profile URL.
+- Requires each user to store their own LinkedIn profile URL.
 - Lets each user create company-specific tracking links.
+- Requires a company name before creating or saving a tracking link.
 - Tracks clicks per company.
 - Stores referrer, user agent, hashed IP, optional country header, and basic device/browser info.
-- Shows a private dashboard with total clicks, clicks today, clicks this week, companies, click history, and a simple click chart.
+- Shows a private SaaS-style dashboard with total clicks, clicks today, clicks this week, companies, click history, and a simple click chart.
 - Uses Supabase Row Level Security so users can only see their own dashboard data.
 
 ## What this app cannot do
@@ -115,7 +135,10 @@ Optional:
 
 ```text
 supabase/sql/003_seed_optional.sql
+supabase/sql/004_update_linkedin_profile_rules.sql
 ```
+
+If your Supabase database already used an older version of this project, run `004_update_linkedin_profile_rules.sql` once to update the profile trigger and URL checks.
 
 The schema creates:
 
@@ -185,7 +208,7 @@ http://localhost:3000
 Example workflow:
 
 1. User creates an account.
-2. User adds or confirms their LinkedIn URL in **Settings**.
+2. User enters their own LinkedIn URL during signup or in **Settings**.
 3. User opens **Companies**.
 4. User adds company `BMW`.
 5. App generates a unique link like:
@@ -233,7 +256,6 @@ Example workflow:
 - `ip_hash`
 - `country`
 - `device`
-- `browser`
 - `created_at`
 
 ## SQL files
@@ -242,6 +264,7 @@ Example workflow:
 supabase/sql/001_schema.sql
 supabase/sql/002_rls_policies.sql
 supabase/sql/003_seed_optional.sql
+supabase/sql/004_update_linkedin_profile_rules.sql
 ```
 
 Run `001_schema.sql` first, then `002_rls_policies.sql`.
@@ -266,6 +289,10 @@ src/
     privacy/
   components/
   lib/
+public/
+  favicon.ico
+  favicon.png
+  logo.png
 supabase/
   sql/
 ```
@@ -299,10 +326,17 @@ Check that:
 - the link is active
 - SQL files were executed successfully
 
+### Tracking link says missing LinkedIn URL
+
+Open **Settings**, enter your own LinkedIn profile URL, and save it. The URL must start with:
+
+```text
+https://www.linkedin.com/in/
+```
+
 ### Dashboard is empty after signup
 
 Check that the `handle_new_user()` trigger exists from `001_schema.sql`.
-
 
 ## Cloud deployment note
 
@@ -325,4 +359,4 @@ The project pins a stable Node/npm line in `package.json`:
 }
 ```
 
-If your platform previously used Node 22 and npm 10.9.x, clear the deployment cache and redeploy with the files from this ZIP only.
+If your platform previously used another Node or npm version, clear the deployment cache and redeploy with the files from this ZIP only.

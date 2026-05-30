@@ -54,11 +54,11 @@ export function LoginForm() {
     <form onSubmit={onSubmit} className="space-y-4">
       <Input label="Email" name="email" type="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} />
       <Input label="Password" name="password" type="password" autoComplete="current-password" value={password} onChange={(event) => setPassword(event.target.value)} />
-      {error ? <p className="rounded-xl bg-red-50 p-3 text-sm font-medium text-red-700">{error}</p> : null}
+      {error ? <p className="rounded-2xl border border-red-100 bg-red-50 p-3 text-sm font-semibold text-red-700">{error}</p> : null}
       <Button type="submit" disabled={loading} className="w-full">
         {loading ? "Logging in" : "Log in"}
       </Button>
-      <Link className="block text-center text-sm font-medium text-slate-600 hover:text-slate-950 hover:underline" href="/reset-password">
+      <Link className="block text-center text-sm font-medium text-brand-700 hover:text-brand-900 hover:underline" href="/reset-password">
         Forgot password?
       </Link>
     </form>

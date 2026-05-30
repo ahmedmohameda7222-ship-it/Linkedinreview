@@ -73,27 +73,29 @@ export default function CompanyDetailPage({ params }: { params: { id: string } }
 
   return (
     <div className="space-y-8">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <Link href="/dashboard/companies" className="text-sm font-semibold text-slate-500 hover:text-slate-950">← Companies</Link>
-          <h1 className="mt-3 text-3xl font-semibold tracking-tight text-slate-950">{company.name}</h1>
-          <p className="mt-2 text-sm text-slate-500">Detailed click history for this tracking link.</p>
+      <section className="rounded-[2rem] border border-white/70 bg-white/85 p-6 shadow-glow ring-1 ring-brand-100/60 backdrop-blur">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <Link href="/dashboard/companies" className="text-sm font-semibold text-brand-700 transition hover:text-brand-900 hover:underline">← Companies</Link>
+            <h1 className="mt-3 text-3xl font-semibold tracking-tight text-slate-950">{company.name}</h1>
+            <p className="mt-2 text-sm leading-6 text-slate-500">Detailed click history for this tracking link.</p>
+          </div>
+          <CopyButton value={trackingLink} />
         </div>
-        <CopyButton value={trackingLink} />
-      </div>
+      </section>
 
-      {error ? <p className="rounded-xl bg-red-50 p-3 text-sm font-medium text-red-700">{error}</p> : null}
+      {error ? <p className="rounded-2xl border border-red-100 bg-red-50 p-3 text-sm font-semibold text-red-700">{error}</p> : null}
 
       <section className="grid gap-4 sm:grid-cols-3">
-        <Card><p className="text-sm text-slate-500">Total clicks</p><p className="mt-2 text-3xl font-semibold">{clicks.length}</p></Card>
-        <Card><p className="text-sm text-slate-500">Status</p><p className="mt-2 text-3xl font-semibold">{company.active ? "Active" : "Inactive"}</p></Card>
-        <Card><p className="text-sm text-slate-500">Last click</p><p className="mt-2 text-lg font-semibold">{formatDateTime(clicks[0]?.clicked_at)}</p></Card>
+        <Card><p className="text-sm font-semibold text-slate-500">Total clicks</p><p className="mt-2 text-3xl font-semibold tracking-tight text-slate-950">{clicks.length}</p></Card>
+        <Card><p className="text-sm font-semibold text-slate-500">Status</p><p className="mt-2 text-3xl font-semibold tracking-tight text-slate-950">{company.active ? "Active" : "Inactive"}</p></Card>
+        <Card><p className="text-sm font-semibold text-slate-500">Last click</p><p className="mt-2 text-lg font-semibold text-slate-950">{formatDateTime(clicks[0]?.clicked_at)}</p></Card>
       </section>
 
       <Card>
         <CardHeader title="Tracking link" description="Use this URL in the CV or application for this company." />
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-          <code className="flex-1 break-all rounded-xl bg-slate-100 px-3 py-2 text-sm text-slate-700">{trackingLink}</code>
+          <code className="flex-1 break-all rounded-2xl bg-brand-50 px-3 py-2.5 text-sm text-slate-700 ring-1 ring-brand-100">{trackingLink}</code>
           <CopyButton value={trackingLink} />
         </div>
       </Card>
@@ -108,10 +110,10 @@ export default function CompanyDetailPage({ params }: { params: { id: string } }
         {clicks.length === 0 ? (
           <EmptyState title="No clicks yet" description="When someone opens this tracking link, click events will appear here." />
         ) : (
-          <div className="overflow-hidden rounded-2xl border border-slate-200">
+          <div className="overflow-hidden rounded-3xl border border-brand-100 bg-white/90">
             <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-slate-200 text-sm">
-                <thead className="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+              <table className="min-w-full divide-y divide-brand-100 text-sm">
+                <thead className="bg-brand-50/80 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
                   <tr>
                     <th className="px-4 py-3">Clicked at</th>
                     <th className="px-4 py-3">Country</th>
@@ -120,10 +122,10 @@ export default function CompanyDetailPage({ params }: { params: { id: string } }
                     <th className="px-4 py-3">IP hash</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100 bg-white">
+                <tbody className="divide-y divide-brand-50 bg-white">
                   {clicks.map((click) => (
-                    <tr key={click.id}>
-                      <td className="px-4 py-3 text-slate-900">{formatDateTime(click.clicked_at)}</td>
+                    <tr key={click.id} className="transition-colors hover:bg-brand-50/35">
+                      <td className="px-4 py-3 font-medium text-slate-900">{formatDateTime(click.clicked_at)}</td>
                       <td className="px-4 py-3 text-slate-600">{click.country ?? "—"}</td>
                       <td className="px-4 py-3 text-slate-600">{click.device ?? "—"}</td>
                       <td className="px-4 py-3 text-slate-600"><span className="line-clamp-2 max-w-md break-all">{click.referrer ?? "—"}</span></td>

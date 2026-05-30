@@ -7,14 +7,14 @@ export function ClicksChart({ clicks }: { clicks: Click[] }) {
 
   return (
     <div className="space-y-4">
-      <div className="flex h-52 items-end gap-2 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+      <div className="flex h-56 items-end gap-2 rounded-3xl border border-brand-100 bg-gradient-to-br from-brand-50 to-white p-4">
         {series.map((item) => {
           const height = Math.max((item.count / max) * 100, item.count > 0 ? 8 : 2);
           return (
-            <div key={item.dateKey} className="flex min-w-0 flex-1 flex-col items-center gap-2">
-              <div className="flex h-36 w-full items-end">
+            <div key={item.dateKey} className="group flex min-w-0 flex-1 flex-col items-center gap-2">
+              <div className="flex h-40 w-full items-end">
                 <div
-                  className="w-full rounded-t-lg bg-slate-900 transition-all"
+                  className="w-full rounded-t-xl bg-gradient-to-t from-brand-800 to-brand-400 transition-all duration-300 group-hover:from-brand-900 group-hover:to-sky-400"
                   style={{ height: `${height}%` }}
                   title={`${item.label}: ${item.count} clicks`}
                 />

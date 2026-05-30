@@ -1,9 +1,15 @@
+import { LINKEDIN_URL_PREFIX } from "@/lib/supabase/config";
+
 export function normalizeText(value: string) {
   return value.trim().replace(/\s+/g, " ");
 }
 
 export function validateCompanyName(value: string) {
   const name = normalizeText(value);
+
+  if (!name) {
+    return { valid: false, message: "Name is required." };
+  }
 
   if (name.length < 2) {
     return { valid: false, message: "Company name must contain at least 2 characters." };
@@ -24,21 +30,22 @@ export function normalizeLinkedInUrl(value: string) {
   const trimmed = value.trim();
   const url = new URL(trimmed);
   url.hash = "";
-  return url.toString();
+  url.search = "";
+  const cleanPath = url.pathname.replace(/\/+$/, "");
+  return `${url.protocol}//${url.hostname}${cleanPath}/`;
 }
 
 export function isValidLinkedInUrl(value: string) {
   try {
-    const url = new URL(value.trim());
+    const trimmed = value.trim();
+    if (!trimmed.startsWith(LINKEDIN_URL_PREFIX)) return false;
+
+    const url = new URL(trimmed);
     const host = url.hostname.toLowerCase();
     const pathname = url.pathname.replace(/\/+$/, "");
+    const profileHandle = pathname.slice("/in/".length).trim();
 
-    return (
-      url.protocol === "https:" &&
-      (host === "linkedin.com" || host === "www.linkedin.com") &&
-      pathname.toLowerCase().startsWith("/in/") &&
-      pathname.length > 4
-    );
+    return url.protocol === "https:" && host === "www.linkedin.com" && pathname.startsWith("/in/") && profileHandle.length > 0;
   } catch {
     return false;
   }
@@ -49,10 +56,17 @@ export function validateLinkedInUrl(value: string) {
     return { valid: false, message: "LinkedIn URL is required." };
   }
 
+  if (!value.trim().startsWith(LINKEDIN_URL_PREFIX)) {
+    return {
+      valid: false,
+      message: `LinkedIn URL must start with ${LINKEDIN_URL_PREFIX}`,
+    };
+  }
+
   if (!isValidLinkedInUrl(value)) {
     return {
       valid: false,
-      message: "Use a valid LinkedIn profile URL, for example https://www.linkedin.com/in/example-user/.",
+      message: "Complete the URL with your own LinkedIn profile name after /in/.",
     };
   }
 

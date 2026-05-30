@@ -26,6 +26,7 @@ export default function CompaniesPage() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [nameError, setNameError] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState("");
 
@@ -91,10 +92,11 @@ export default function CompaniesPage() {
   async function onAddCompany(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError("");
+    setNameError("");
 
     const validation = validateCompanyName(companyName);
     if (!validation.valid || !validation.value) {
-      setError(validation.message);
+      setNameError(validation.message);
       return;
     }
 
@@ -176,18 +178,33 @@ export default function CompaniesPage() {
 
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="text-3xl font-semibold tracking-tight text-slate-950">Companies</h1>
-        <p className="mt-2 text-sm text-slate-500">Create one tracking link for each company or application channel.</p>
+      <div className="rounded-3xl border border-white/70 bg-white/80 p-6 shadow-soft ring-1 ring-brand-100/60 backdrop-blur">
+        <p className="text-sm font-semibold uppercase tracking-[0.2em] text-brand-700">Tracking links</p>
+        <h1 className="mt-2 text-3xl font-semibold tracking-tight text-slate-950">Companies</h1>
+        <p className="mt-2 text-sm leading-6 text-slate-500">Create one clean tracking link for each company or application channel.</p>
       </div>
 
       <Card>
-        <CardHeader title="Add company" description="A globally unique slug is generated automatically, for example bmw-k8x2qf." />
-        <form onSubmit={onAddCompany} className="grid gap-4 md:grid-cols-[1fr_auto] md:items-end">
-          <Input label="Company name" value={companyName} onChange={(event) => setCompanyName(event.target.value)} placeholder="BMW" />
-          <Button type="submit" disabled={submitting}>{submitting ? "Adding" : "Add company"}</Button>
+        <CardHeader title="Add company" description="Enter a mandatory name. A globally unique slug is generated automatically, for example bmw-k8x2qf." />
+        <form onSubmit={onAddCompany} className="grid gap-4 md:grid-cols-[1fr_auto] md:items-start">
+          <Input
+            label="Company name"
+            name="companyName"
+            required
+            value={companyName}
+            onChange={(event) => {
+              setCompanyName(event.target.value);
+              if (nameError) setNameError("");
+            }}
+            placeholder="BMW"
+            error={nameError}
+          />
+          <Button type="submit" disabled={submitting} className="md:mt-8">{submitting ? "Adding" : "Add company"}</Button>
         </form>
-        {error ? <p className="mt-4 rounded-xl bg-red-50 p-3 text-sm font-medium text-red-700">{error}</p> : null}
+        {!profile?.linkedin_url ? (
+          <p className="mt-4 rounded-2xl border border-amber-100 bg-amber-50 p-3 text-sm font-semibold text-amber-800">Add your LinkedIn URL in Settings before creating tracking links.</p>
+        ) : null}
+        {error ? <p className="mt-4 rounded-2xl border border-red-100 bg-red-50 p-3 text-sm font-semibold text-red-700">{error}</p> : null}
       </Card>
 
       {enrichedCompanies.length === 0 ? (

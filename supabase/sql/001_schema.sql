@@ -20,7 +20,7 @@ create table if not exists public.profiles (
   constraint profiles_linkedin_url_check check (
     linkedin_url is null
     or linkedin_url = ''
-    or linkedin_url ~* '^https://(www\.)?linkedin\.com/in/.+'
+    or linkedin_url ~* '^https://www\.linkedin\.com/in/.+'
   )
 );
 
@@ -35,7 +35,7 @@ create table if not exists public.companies (
   updated_at timestamptz not null default timezone('utc', now()),
   constraint companies_name_length_check check (char_length(trim(name)) between 2 and 80),
   constraint companies_slug_format_check check (slug ~ '^[a-z0-9-]{3,80}$'),
-  constraint companies_target_url_check check (target_url ~* '^https://(www\.)?linkedin\.com/in/.+')
+  constraint companies_target_url_check check (target_url ~* '^https://www\.linkedin\.com/in/.+')
 );
 
 create table if not exists public.clicks (
@@ -59,11 +59,13 @@ create index if not exists clicks_user_id_idx on public.clicks(user_id);
 create index if not exists clicks_company_id_idx on public.clicks(company_id);
 create index if not exists clicks_clicked_at_idx on public.clicks(clicked_at desc);
 
+drop trigger if exists profiles_set_updated_at on public.profiles;
 create trigger profiles_set_updated_at
 before update on public.profiles
 for each row
 execute function public.set_updated_at();
 
+drop trigger if exists companies_set_updated_at on public.companies;
 create trigger companies_set_updated_at
 before update on public.companies
 for each row
@@ -80,10 +82,7 @@ begin
   values (
     new.id,
     coalesce(new.raw_user_meta_data ->> 'full_name', ''),
-    coalesce(
-      nullif(new.raw_user_meta_data ->> 'linkedin_url', ''),
-      'https://www.linkedin.com/in/ahmed-mohamed-a63a1a230/'
-    )
+    nullif(new.raw_user_meta_data ->> 'linkedin_url', '')
   )
   on conflict (user_id) do nothing;
 

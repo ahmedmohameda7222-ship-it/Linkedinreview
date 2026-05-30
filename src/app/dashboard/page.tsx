@@ -73,17 +73,20 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-8">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <h1 className="text-3xl font-semibold tracking-tight text-slate-950">Dashboard</h1>
-          <p className="mt-2 text-sm text-slate-500">Track how often generated recruiter links are opened.</p>
+      <section className="overflow-hidden rounded-[2rem] border border-white/70 bg-white/85 p-6 shadow-glow ring-1 ring-brand-100/60 backdrop-blur">
+        <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+          <div className="max-w-3xl">
+            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-brand-700">Recruiter link analytics</p>
+            <h1 className="mt-3 text-4xl font-semibold tracking-tight text-slate-950 sm:text-5xl">Dashboard</h1>
+            <p className="mt-3 text-sm leading-6 text-slate-500 sm:text-base">Create company-specific recruiter links, record valid opens, and redirect visitors to the LinkedIn profile saved in your account.</p>
+          </div>
+          <Link href="/dashboard/companies">
+            <Button>Add company</Button>
+          </Link>
         </div>
-        <Link href="/dashboard/companies">
-          <Button>Add company</Button>
-        </Link>
-      </div>
+      </section>
 
-      {error ? <p className="rounded-xl bg-red-50 p-3 text-sm font-medium text-red-700">{error}</p> : null}
+      {error ? <p className="rounded-2xl border border-red-100 bg-red-50 p-3 text-sm font-semibold text-red-700">{error}</p> : null}
 
       <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard label="Total clicks" value={clicks.length} />
@@ -98,9 +101,9 @@ export default function DashboardPage() {
       </Card>
 
       <Card>
-        <div className="mb-5 flex items-center justify-between gap-4">
+        <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <CardHeader title="Companies" description="Latest tracking links and their click counts." />
-          <Link className="text-sm font-semibold text-slate-950 hover:underline" href="/dashboard/companies">Manage all</Link>
+          <Link className="text-sm font-semibold text-brand-700 transition hover:text-brand-900 hover:underline" href="/dashboard/companies">Manage all</Link>
         </div>
         {previewCompanies.length === 0 ? (
           <EmptyState
