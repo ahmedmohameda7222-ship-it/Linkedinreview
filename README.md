@@ -11,8 +11,10 @@ The app helps users create clean public tracking links for job applications, rec
 - Creates multiple source-specific tracking links per company.
 - Uses clean random public slugs such as `/profile/a8f3k2` instead of company-specific slugs.
 - Redirects public LinkedIn tracking links to the user's configured LinkedIn URL.
-- Tracks CV landing page views through `/cv/[slug]`.
-- Tracks CV downloads through `/cv/[slug]/download`.
+- Uploads a PDF CV, stores file metadata, and generates company-specific CV links.
+- Tracks CV download-link opens through `/cv/[slug]`.
+- Tracks online CV views through `/cv/[slug]/view`.
+- Tracks CV downloads through `/cv/[slug]` and `/cv/[slug]/download`.
 - Tracks total clicks, likely-human clicks, possible bots, duplicates, CV views, CV downloads, browser/device/OS/country stats, and source/campaign performance.
 - Provides a status pipeline: `Applied`, `Link Opened`, `Interview`, `Rejected`, `Offer`, `Archived`.
 - Automatically moves a company from `Applied` to `Link Opened` after the first likely-human click.
@@ -83,16 +85,14 @@ The dashboard groups analytics by company, source, and tracking link.
 
 ## CV view/download tracking
 
-Each tracking slug can also be used as a CV landing page:
+Each company can have a tracked CV download link and an online viewer:
 
 ```text
 /cv/[slug]
+/cv/[slug]/view
 ```
 
-When opened, the app records a CV view and shows a simple professional landing page with:
-
-- View LinkedIn
-- Download CV
+When `/cv/[slug]` is opened, the app records a CV link-open event and a CV download event, then redirects to the uploaded PDF. When `/cv/[slug]/view` is opened, the app records an online CV view and embeds the PDF in the browser.
 
 The download button uses:
 
@@ -100,7 +100,7 @@ The download button uses:
 /cv/[slug]/download
 ```
 
-This records a CV download event and redirects to the user's `cv_file_url`. For now, CV uploads are intentionally simple: users paste a public PDF URL in Settings.
+This records a CV download event and redirects to the active uploaded CV URL. The app does not claim that offline PDF opens can be reliably tracked.
 
 ## Privacy note
 
@@ -187,6 +187,12 @@ supabase/sql/002_rls_policies.sql
 supabase/sql/006_fix_public_tracking_rpc.sql
 ```
 
+6. For the professional CV upload and dashboard section upgrade, run:
+
+```text
+supabase/sql/007_professional_cv_tracking.sql
+```
+
 ## SQL structure
 
 Main tables:
@@ -194,6 +200,7 @@ Main tables:
 - `profiles`
 - `companies`
 - `tracking_links`
+- `cv_files`
 - `clicks`
 - `cv_events`
 - `timeline_events`
@@ -225,6 +232,17 @@ FIRST_CLICK_NOTIFICATION_FROM="Job Tracker <notifications@your-domain.com>"
 ```
 
 The app works normally if these variables are missing. The notification helper returns a skipped result and never crashes the redirect flow.
+
+CV uploads use a Supabase Storage bucket named `cv-files`. The migration creates the bucket and authenticated user policies. In production, set `SUPABASE_SERVICE_ROLE_KEY` for server-side privileged helpers and rotate the hardcoded public Supabase values currently kept in `src/lib/supabase/config.ts`.
+
+## Professional CV tracking limitation
+
+A normal downloaded PDF cannot reliably phone home every time someone opens it offline. Desktop PDF readers usually block scripts or external tracking for security and privacy. This app therefore uses the reliable professional flow:
+
+- `/cv/[slug]` records `CV_LINK_OPENED`, records `CV_DOWNLOADED`, then redirects to the uploaded PDF.
+- `/cv/[slug]/view` records `CV_VIEWED_ONLINE`, embeds the PDF in the browser, and shows a download button.
+- `/cv/[slug]/download` records `CV_DOWNLOADED` from the online viewer.
+- Generated PDF wrappers should use a normal link to `/cv/[slug]/view`; do not rely on JavaScript inside a PDF.
 
 ## Email notification abstraction
 
@@ -265,11 +283,11 @@ General steps:
 
 1. Create an account.
 2. Add your LinkedIn URL in Settings.
-3. Optionally add a public CV PDF URL in Settings.
+3. Upload a PDF CV in CV Tracking.
 4. Add a company/application.
 5. Create source-specific tracking links.
 6. Put the clean `/profile/[slug]` link in your CV, email, cover letter, or application.
-7. Optionally use `/cv/[slug]` as a CV landing page.
+7. Use `/cv/[slug]` for tracked CV downloads or `/cv/[slug]/view` for online CV viewing.
 8. Recruiter opens the link.
 9. Dashboard records the click, classifies it, and updates analytics.
 10. Follow up based on status, reminder date, and likely-human engagement.
@@ -279,9 +297,19 @@ General steps:
 ```text
 /profile/a8f3k2          -> records LinkedIn click and redirects to LinkedIn
 /r/a8f3k2                -> legacy route, same behavior
-/cv/a8f3k2               -> records CV view and shows CV landing page
+/cv/a8f3k2               -> records CV link opened + CV downloaded, then serves the PDF URL
+/cv/a8f3k2/view          -> records online CV view and embeds the PDF
 /cv/a8f3k2/download      -> records CV download and redirects to CV file URL
 ```
+
+## Testing checklist
+
+1. LinkedIn tracking link: set a valid LinkedIn profile URL in Settings, create a company link, open `/profile/[slug]` or `/r/[slug]`, and verify a LinkedIn open appears in Activity.
+2. CV upload: open CV Tracking, upload a PDF under 10 MB, and confirm it becomes the active CV file.
+3. CV tracked download: generate a CV link for a company, open `/cv/[slug]`, and verify `CV_LINK_OPENED` plus `CV_DOWNLOADED` in Activity.
+4. CV online view: open `/cv/[slug]/view`, confirm the embedded PDF displays, then click Download PDF.
+5. Activity timeline: filter by company, event type, and date range.
+6. Analytics: confirm clicks per company, CV downloads per company, events over time, and most active company cards update.
 
 ## Quality notes
 

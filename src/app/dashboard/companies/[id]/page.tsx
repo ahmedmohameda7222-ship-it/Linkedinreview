@@ -19,7 +19,7 @@ import { createTrackingSlug } from "@/lib/slugs";
 import { createClient } from "@/lib/supabase/browser";
 import { nullableClean, validateCompanyName, validateOptionalEmail, validateOptionalUrl } from "@/lib/validation";
 
-const statusOptions: ApplicationStatus[] = ["Applied", "Link Opened", "Interview", "Rejected", "Offer", "Archived"];
+const statusOptions: ApplicationStatus[] = ["Not applied", "Applied", "Viewed LinkedIn", "Opened CV", "Downloaded CV", "Interview", "Rejected", "Offer", "Archived"];
 const sourceOptions: TrackingSource[] = ["CV", "Cover Letter", "Email", "Email Signature", "LinkedIn Message", "Portfolio", "Other"];
 
 export default function CompanyDetailPage({ params }: { params: { id: string } }) {

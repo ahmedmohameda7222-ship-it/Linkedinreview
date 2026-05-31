@@ -10,6 +10,10 @@ import { createClient } from "@/lib/supabase/browser";
 const links = [
   { href: "/dashboard", label: "Overview" },
   { href: "/dashboard/companies", label: "Companies" },
+  { href: "/dashboard/tracking-links", label: "Tracking Links" },
+  { href: "/dashboard/cv-tracking", label: "CV Tracking" },
+  { href: "/dashboard/activity", label: "Activity" },
+  { href: "/dashboard/analytics", label: "Analytics" },
   { href: "/dashboard/settings", label: "Settings" },
   { href: "/privacy", label: "Privacy" },
 ];

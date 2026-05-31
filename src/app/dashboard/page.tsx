@@ -19,7 +19,7 @@ import { countBy, downloadCsv, enrichTrackingLinks, formatDateTime, getBaseUrl, 
 import { createClient } from "@/lib/supabase/browser";
 import { isValidLinkedInUrl } from "@/lib/validation";
 
-const statuses = ["Applied", "Link Opened", "Interview", "Rejected", "Offer", "Archived"] as const;
+const statuses = ["Not applied", "Applied", "Viewed LinkedIn", "Opened CV", "Downloaded CV", "Interview", "Rejected", "Offer"] as const;
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -94,6 +94,7 @@ export default function DashboardPage() {
   const humanClicks = filteredClicks.filter((click) => click.click_type === "human").length;
   const botClicks = filteredClicks.filter((click) => click.click_type === "bot").length;
   const duplicateClicks = filteredClicks.filter((click) => click.click_type === "duplicate").length;
+  const cvLinkOpens = filteredCvEvents.filter((event) => event.event_type === "link_opened").length;
   const cvViews = filteredCvEvents.filter((event) => event.event_type === "view").length;
   const cvDownloads = filteredCvEvents.filter((event) => event.event_type === "download").length;
   const openedCompanyIds = new Set(filteredClicks.filter((click) => click.click_type === "human").map((click) => click.company_id));
@@ -206,7 +207,7 @@ export default function DashboardPage() {
         <StatCard label="Healthy links" value={healthyLinks} detail={warnings.length ? `${warnings.length} warning(s)` : "No warnings detected."} />
       </section>
 
-      <section className="grid gap-4 lg:grid-cols-6">
+      <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {statuses.map((status) => (
           <Card key={status} className="p-4">
             <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{status}</p>
@@ -249,7 +250,7 @@ export default function DashboardPage() {
       <section className="grid gap-4 lg:grid-cols-2">
         <Card>
           <CardHeader title="CV views vs LinkedIn clicks" />
-          <BarList data={[{ label: "CV views", value: cvViews }, { label: "CV downloads", value: cvDownloads }, { label: "LinkedIn clicks", value: filteredClicks.length }]} />
+          <BarList data={[{ label: "Link opened", value: filteredClicks.length }, { label: "CV link opened", value: cvLinkOpens }, { label: "CV viewed online", value: cvViews }, { label: "CV downloaded", value: cvDownloads }]} />
         </Card>
         <Card>
           <CardHeader title="Link health checker" description="Missing targets are warnings; active redirects still never expose private dashboard data." />

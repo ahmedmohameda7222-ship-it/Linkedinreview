@@ -1,15 +1,16 @@
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
 
-export type ApplicationStatus = "Applied" | "Link Opened" | "Interview" | "Rejected" | "Offer" | "Archived";
+export type ApplicationStatus = "Not applied" | "Applied" | "Viewed LinkedIn" | "Downloaded CV" | "Opened CV" | "Interview" | "Rejected" | "Offer" | "Archived" | "Link Opened";
 export type TrackingSource = "CV" | "Cover Letter" | "Email" | "Email Signature" | "LinkedIn Message" | "Portfolio" | "Other";
 export type ClickType = "human" | "bot" | "duplicate" | "unknown";
-export type CvEventType = "view" | "download";
+export type CvEventType = "link_opened" | "view" | "download";
 
 export type Profile = Database["public"]["Tables"]["profiles"]["Row"];
 export type Company = Database["public"]["Tables"]["companies"]["Row"];
 export type TrackingLink = Database["public"]["Tables"]["tracking_links"]["Row"];
 export type Click = Database["public"]["Tables"]["clicks"]["Row"];
 export type CvEvent = Database["public"]["Tables"]["cv_events"]["Row"];
+export type CvFile = Database["public"]["Tables"]["cv_files"]["Row"];
 export type TimelineEvent = Database["public"]["Tables"]["timeline_events"]["Row"];
 export type Reminder = Database["public"]["Tables"]["reminders"]["Row"];
 
@@ -105,6 +106,7 @@ export interface Database {
           source: TrackingSource;
           slug: string;
           target_type: string;
+          destination_url: string | null;
           active: boolean;
           first_human_click_at: string | null;
           first_click_notification_sent: boolean;
@@ -118,6 +120,7 @@ export interface Database {
           source: TrackingSource;
           slug: string;
           target_type?: string;
+          destination_url?: string | null;
           active?: boolean;
           first_human_click_at?: string | null;
           first_click_notification_sent?: boolean;
@@ -131,6 +134,7 @@ export interface Database {
           source?: TrackingSource;
           slug?: string;
           target_type?: string;
+          destination_url?: string | null;
           active?: boolean;
           first_human_click_at?: string | null;
           first_click_notification_sent?: boolean;
@@ -202,6 +206,7 @@ export interface Database {
           user_id: string;
           company_id: string | null;
           tracking_link_id: string | null;
+          cv_file_id: string | null;
           event_type: CvEventType;
           slug: string;
           ip_hash: string | null;
@@ -219,6 +224,7 @@ export interface Database {
           user_id: string;
           company_id?: string | null;
           tracking_link_id?: string | null;
+          cv_file_id?: string | null;
           event_type: CvEventType;
           slug: string;
           ip_hash?: string | null;
@@ -236,6 +242,7 @@ export interface Database {
           user_id?: string;
           company_id?: string | null;
           tracking_link_id?: string | null;
+          cv_file_id?: string | null;
           event_type?: CvEventType;
           slug?: string;
           ip_hash?: string | null;
@@ -247,6 +254,45 @@ export interface Database {
           is_bot?: boolean;
           is_duplicate?: boolean;
           created_at?: string;
+        };
+        Relationships: [];
+      };
+      cv_files: {
+        Row: {
+          id: string;
+          user_id: string;
+          original_file_name: string;
+          stored_file_path: string;
+          public_url: string | null;
+          file_size: number;
+          mime_type: string;
+          active: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          original_file_name: string;
+          stored_file_path: string;
+          public_url?: string | null;
+          file_size: number;
+          mime_type?: string;
+          active?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          original_file_name?: string;
+          stored_file_path?: string;
+          public_url?: string | null;
+          file_size?: number;
+          mime_type?: string;
+          active?: boolean;
+          created_at?: string;
+          updated_at?: string;
         };
         Relationships: [];
       };
@@ -362,6 +408,7 @@ export interface Database {
           user_id: string | null;
           company_id: string | null;
           tracking_link_id: string | null;
+          cv_file_id?: string | null;
         }[];
       };
       mark_first_click_notification_sent: {
